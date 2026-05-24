@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔍 CorpusProbe
+# 🔍 Corpus Probe
 
 **A Retrieval-Augmented Generation system that turns your PDF notes into a queryable knowledge base.**
 
@@ -30,7 +30,7 @@ No hallucinations. No training data leakage. Answers come only from what you fee
 - 🗄️ **ChromaDB Vector Store** — Chunks and embeddings are stored and queried with cosine similarity search
 - 🤖 **Context-Grounded Answers** — Gemini LLM answers using only the top-3 retrieved chunks; no off-topic generation
 - 🔁 **Auto Model Fallback** — Cycles through a ranked list of Gemini models automatically on rate limits
-- 🌐 **REST API** — Full CRUD interface for sources and a query endpoint, built on FastAPI
+- 🌐 **REST API** — RESTful API interface for sources and a query endpoint, built on FastAPI
 - 💻 **CLI Mode** — Run `query.py` directly to ask questions from the terminal
 
 ---
@@ -90,13 +90,13 @@ Query
 │  question → gemini-embedding-2 → query vector           │
 │      │                                                  │
 │      ▼                                                  │
-│  ChromaDB.query(n_results=3) → top-3 relevant chunks   │
+│  ChromaDB.query(n_results=3) → top-3 relevant chunks    │
 │      │                                                  │
 │      ▼                                                  │
 │  prompt = question + context (chunks joined)            │
 │      │                                                  │
 │      ▼                                                  │
-│  Gemini LLM (with fallback chain) → grounded answer    │
+│  Gemini LLM (with fallback chain) → grounded answer     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -116,7 +116,7 @@ When a Gemini model returns a rate-limit error (`ClientError`), CorpusProbe auto
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/corpus-probe.git
+git clone https://github.com/durvesh-thorat/corpus-probe.git
 cd corpus-probe
 ```
 
@@ -281,7 +281,6 @@ pip install -r requirements.txt
 
 ## Limitations
 
-- **Chunk IDs are global integers** — re-ingesting different PDFs can cause ID collisions in ChromaDB. A production-grade fix would namespace IDs by filename (e.g., `filename_chunk_0`).
 - **No authentication** — the API has no auth layer. Do not expose it publicly without adding one.
 - **Chunk size is fixed at 500 words** — this is a reasonable default but may not be optimal for all document types. Overlapping chunks would improve retrieval recall.
 
