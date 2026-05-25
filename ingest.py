@@ -61,7 +61,7 @@ def ingest(pdf_path):
             embeddings=result.embeddings[0].values,
             documents=chunk,
             metadatas=[{
-                'filename': pdf_path,
+                'filename': os.path.basename(pdf_path),
                 'chunk': i,
             }]
         )
