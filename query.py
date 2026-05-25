@@ -7,38 +7,37 @@ from google.genai import errors
 # builds a context-grounded prompt, and returns an AI-generated answer.
 def query(question: str):
 
-    # Embed the user's question using the same Gemini Embedding model
-    # that was used during ingestion. This converts the question into
-    # a semantic number list so it can be compared against stored chunk embeddings.
+    # Embed the question using the same model used during ingestion
+    # so the vector space is consistent for similarity comparison.
     question_embedding = google_client.models.embed_content(
         model="gemini-embedding-2",
         contents=question
     )
 
-    # Search ChromaDB for the top 3 chunks whose embeddings are closest
-    # to the question embedding. Closeness in embedding space means
-    # similarity in meaning — not just keyword matching.
+    # Retrieve top 3 semantically similar chunks from ChromaDB.
     results = collection.query(
         query_embeddings=question_embedding.embeddings[0].values,
         n_results=3
     )
 
-    # results["documents"][0] returns a list of 3 chunk strings.
-    # These are the most semantically relevant pieces of the ingested PDFs.
     relevant_chunks = results["documents"][0]
-
-    # Combine the 3 chunks into one context string (~1500 words).
-    # This context is what the AI will use to answer — it will not rely
-    # on its own training data, only on what is provided here.
     context = " ".join(relevant_chunks)
 
-    # Build the final prompt. The instruction "answer based on context only"
-    # prevents the model from hallucinating answers outside the provided notes.
-    prompt = f"Question: {question}\nAnswer based on the provided context only \n\nContext:\n{context}"
+    prompt = f"""You are a precise question-answering assistant. Your sole knowledge source is the context extracted from the user's personal PDF notes provided below.
 
-    # Ranked list of Gemini models to try in order.
-    # Free tier accounts have per-model rate limits — if one model's quota
-    # is exhausted, the next one is attempted automatically.
+        Rules:
+        - Answer only using information present in the context.
+        - If the answer is not in the context, respond with: "This information is not available in your notes."
+        - Do not infer, assume, or use external knowledge.
+        - Be concise and direct. Avoid unnecessary elaboration.
+        - If the question is ambiguous, answer based on the most relevant part of the context.
+
+        Context: {context}
+        Question: {question}
+
+        Answer:"""
+
+    # Cascading fallback list — cycles to the next model on rate limit errors.
     models = [
         "models/gemini-3.1-pro-preview",
         "models/gemini-3.1-pro-preview-customtools",
@@ -59,9 +58,6 @@ def query(question: str):
         "models/gemma-4-26b-a4b-it"
     ]
 
-    # Try each model in order. On a ClientError (rate limit or unavailable),
-    # log the failure and move to the next model.
-    # On success, return the answer text immediately and stop the loop.
     for model in models:
         try:
             response = google_client.models.generate_content(

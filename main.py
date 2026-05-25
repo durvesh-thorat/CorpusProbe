@@ -12,7 +12,7 @@ class Query(BaseModel):
     question: str
 
 
-app = FastAPI(title="RAG AUTOMATION")
+app = FastAPI(title="CORPUS PROBE")
 
 
 # Returns a set of unique filenames that have been ingested into ChromaDB.
@@ -32,15 +32,11 @@ def get_sources():
 @app.post("/sources")
 async def upload_source(file: UploadFile = File(...)):
 
-    # file object lives in memory at this point.
-    # Read its raw bytes and write them to disk in binary mode ("wb")
-    # so the PDF is preserved exactly as uploaded.
+    # Save uploaded file to disk in binary mode
     contents = await file.read()
     with open(f"sources/{file.filename}", "wb") as f:
         f.write(contents)
 
-    # Pass the saved file path to ingest() which handles all
-    # chunking, embedding, and ChromaDB storage internally.
     ingest(f"sources/{file.filename}")
 
     return {"message": f"{file.filename} ingested successfully"}

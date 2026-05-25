@@ -1,5 +1,7 @@
 import fitz #importing PyMuPDF
-from config import google_client, collection
+from config import google_client, collection 
+import os
+
 
 
 # get_chunks() takes a fitz.Document object and splits its full text into
@@ -8,18 +10,15 @@ from config import google_client, collection
 # searching smaller pieces is far more accurate than searching full documents.
 def get_chunks(doc : fitz.Document):
 
-    # Iterate over every page in the document and collect all text into one string.
     data = ""
     for i in range(doc.page_count):
         page = doc[i]
         text_data = page.get_text()
         data += text_data
     
-    # Split the full text string into individual words.
     words = data.split()
 
     # Group words into chunks of 500, converting each group back into a string.
-    # " ".join() reassembles the word list into a readable sentence format.
     chunks = []
     for i in range(0, len(words), 500):
         chunks.append(" ".join(words[i:i+500])) #converting every 500 words to chunk(string) and storing in chunks list
@@ -34,7 +33,6 @@ def get_chunks(doc : fitz.Document):
 # updates existing records instead of throwing a duplicate ID error.
 def ingest(pdf_path):
 
-    # Open the PDF from the given file path and extract text chunks from it.
     doc = fitz.open(pdf_path)
     chunks = get_chunks(doc)
 
@@ -59,7 +57,7 @@ def ingest(pdf_path):
         # upsert() updates the record if the id already exists, preventing errors
         # when the same PDF is ingested more than once.
         collection.upsert(
-            ids=str(i),
+            ids=f"{os.path.basename(pdf_path)}_{i}",
             embeddings=result.embeddings[0].values,
             documents=chunk,
             metadatas=[{
