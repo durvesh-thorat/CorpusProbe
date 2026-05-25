@@ -32,6 +32,8 @@ def get_sources():
 @app.post("/sources")
 async def upload_source(file: UploadFile = File(...)):
 
+    os.makedirs("sources", exist_ok=True)
+    
     # Save uploaded file to disk in binary mode
     contents = await file.read()
     with open(f"sources/{file.filename}", "wb") as f:
