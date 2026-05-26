@@ -23,19 +23,13 @@ def query(question: str):
     relevant_chunks = results["documents"][0]
     context = " ".join(relevant_chunks)
 
-    prompt = f"""You are a precise question-answering assistant. Your sole knowledge source is the context extracted from the user's personal PDF notes provided below.
+    prompt = f"""You are a question-answering assistant embedded in a REST API. Your responses are returned as plain text strings and rendered directly in API clients or terminals. Do not use markdown, headers, bullet points, or any formatting. Write in clear, flowing prose only.
+        Answer the question using the provided context from the user's notes. If the answer is partially in the context, use what is available. Only if the topic is completely absent from the context, say "This information is not available in your notes."
 
-        Rules:
-        - Answer only using information present in the context.
-        - If the answer is not in the context, respond with: "This information is not available in your notes."
-        - Do not infer, assume, or use external knowledge.
-        - Be concise and direct. Avoid unnecessary elaboration.
-        - If the question is ambiguous, answer based on the most relevant part of the context.
+        Context:
+        {context}
 
-        Context: {context}
-        Question: {question}
-
-        Answer:"""
+        Question: {question} """
 
     # Cascading fallback list — cycles to the next model on rate limit errors.
     models = [
@@ -57,7 +51,7 @@ def query(question: str):
         "models/gemma-4-31b-it",
         "models/gemma-4-26b-a4b-it"
     ]
-
+    
     for model in models:
         try:
             response = google_client.models.generate_content(
@@ -65,7 +59,7 @@ def query(question: str):
                 contents=prompt
             )
         except errors.ClientError as e:
-            print(f"Model: {model} | Status: {e.status}")
+            print(f"Trying: {model} | Status: {e.status}")
         else:
             return response.text
 
